@@ -1,0 +1,17 @@
+version: "3.9"
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: store_rating_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: store_admin
+      POSTGRES_PASSWORD: store_admin_pass
+      POSTGRES_DB: store_rating_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
