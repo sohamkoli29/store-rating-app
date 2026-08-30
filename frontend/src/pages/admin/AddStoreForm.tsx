@@ -4,7 +4,7 @@ import { z } from "zod";
 import api from "../../lib/axios";
 
 const createStoreSchema = z.object({
-  name: z.string().min(1).max(100),
+  name: z.string().min(20).max(60),
   email: z.string().email(),
   address: z.string().max(400),
   ownerId: z.string().uuid("Must be a valid owner user id"),
@@ -29,7 +29,7 @@ const AddStoreForm = ({ onCreated }: { onCreated: () => void }) => {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 gap-3 sm:grid-cols-2" noValidate>
       <div>
-        <input placeholder="Store name" {...register("name")} className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm" />
+        <input placeholder="Store name (20-60 chars)" {...register("name")} className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm" />
         {errors.name && <p className="mt-1 text-xs text-red-600">{errors.name.message}</p>}
       </div>
       <div>
