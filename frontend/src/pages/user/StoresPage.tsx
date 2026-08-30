@@ -17,12 +17,19 @@ const StoresPage = () => {
   const [sortBy, setSortBy] = useState("name");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchStores = () => {
+    setLoading(true);
+    setError(null);
     const params: Record<string, string> = { sortBy, sortOrder };
     Object.entries(filters).forEach(([k, v]) => v && (params[k] = v));
-    api.get("/stores", { params }).then((res) => setStores(res.data.data));
+    api
+      .get("/stores", { params })
+      .then((res) => setStores(res.data.data))
+      .catch((err) => setError(err?.response?.data?.message ?? "Failed to load stores"))
+      .finally(() => setLoading(false));
   };
 
   useEffect(fetchStores, [filters, sortBy, sortOrder]);
@@ -71,22 +78,25 @@ const StoresPage = () => {
             </tr>
           </thead>
           <tbody>
-            {stores.map((store) => (
-              <tr key={store.id} className="border-b border-slate-100 last:border-0">
-                <td className="px-4 py-3">{store.name}</td>
-                <td className="px-4 py-3">{store.address}</td>
-                <td className="px-4 py-3">{store.overallRating.toFixed(2)}</td>
-                <td className="px-4 py-3">
-                  <StarRating
-                    value={store.myRating ?? 0}
-                    disabled={savingId === store.id}
-                    onChange={(rating) => handleRate(store.id, rating, store.myRating !== null)}
-                  />
-                </td>
-              </tr>
-            ))}
-            {stores.length === 0 && (
+            {loading ? (
+              <tr><td colSpan={4} className="px-4 py-6 text-center text-slate-400">Loading...</td></tr>
+            ) : stores.length === 0 ? (
               <tr><td colSpan={4} className="px-4 py-6 text-center text-slate-400">No stores found</td></tr>
+            ) : (
+              stores.map((store) => (
+                <tr key={store.id} className="border-b border-slate-100 last:border-0">
+                  <td className="px-4 py-3">{store.name}</td>
+                  <td className="px-4 py-3">{store.address}</td>
+                  <td className="px-4 py-3">{store.overallRating.toFixed(2)}</td>
+                  <td className="px-4 py-3">
+                    <StarRating
+                      value={store.myRating ?? 0}
+                      disabled={savingId === store.id}
+                      onChange={(rating) => handleRate(store.id, rating, store.myRating !== null)}
+                    />
+                  </td>
+                </tr>
+              ))
             )}
           </tbody>
         </table>

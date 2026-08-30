@@ -17,11 +17,19 @@ const AdminUsersPage = () => {
   const [sortBy, setSortBy] = useState("name");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [showForm, setShowForm] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchUsers = () => {
+    setLoading(true);
+    setError(null);
     const params: Record<string, string> = { sortBy, sortOrder };
     Object.entries(filters).forEach(([k, v]) => v && (params[k] = v));
-    api.get("/admin/users", { params }).then((res) => setUsers(res.data.data));
+    api
+      .get("/admin/users", { params })
+      .then((res) => setUsers(res.data.data))
+      .catch((err) => setError(err?.response?.data?.message ?? "Failed to load users"))
+      .finally(() => setLoading(false));
   };
 
   useEffect(fetchUsers, [filters, sortBy, sortOrder]);
@@ -36,7 +44,7 @@ const AdminUsersPage = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-lg font-semibold text-slate-900">Users</h1>
         <button onClick={() => setShowForm((v) => !v)} className="rounded-md bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700">
           {showForm ? "Close" : "Add user"}
@@ -61,6 +69,8 @@ const AdminUsersPage = () => {
         </select>
       </div>
 
+      {error && <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+
       <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
         <table className="w-full text-sm">
           <thead>
@@ -72,16 +82,19 @@ const AdminUsersPage = () => {
             </tr>
           </thead>
           <tbody>
-            {users.map((u) => (
-              <tr key={u.id} className="border-b border-slate-100 last:border-0">
-                <td className="px-4 py-3">{u.name}</td>
-                <td className="px-4 py-3">{u.email}</td>
-                <td className="px-4 py-3">{u.address}</td>
-                <td className="px-4 py-3">{u.role}</td>
-              </tr>
-            ))}
-            {users.length === 0 && (
+            {loading ? (
+              <tr><td colSpan={4} className="px-4 py-6 text-center text-slate-400">Loading...</td></tr>
+            ) : users.length === 0 ? (
               <tr><td colSpan={4} className="px-4 py-6 text-center text-slate-400">No users found</td></tr>
+            ) : (
+              users.map((u) => (
+                <tr key={u.id} className="border-b border-slate-100 last:border-0">
+                  <td className="px-4 py-3">{u.name}</td>
+                  <td className="px-4 py-3">{u.email}</td>
+                  <td className="px-4 py-3">{u.address}</td>
+                  <td className="px-4 py-3">{u.role}</td>
+                </tr>
+              ))
             )}
           </tbody>
         </table>

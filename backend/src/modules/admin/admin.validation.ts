@@ -12,7 +12,7 @@ export const createUserSchema = z.object({
 });
 
 export const createStoreSchema = z.object({
-  name: z.string().min(1).max(100),
+  name: z.string().min(20).max(60),
   email: z.string().email(),
   address: z.string().max(400),
   ownerId: z.string().uuid(),
