@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import api from "../../lib/axios";
 import SortableTableHeader from "../../components/SortableTableHeader";
 import AddUserForm from "./AddUserForm";
+import UserDetailModal from "./UserDetailModal";
 
 interface AdminUserRow {
   id: string;
@@ -19,6 +20,7 @@ const AdminUsersPage = () => {
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [viewUserId, setViewUserId] = useState<string | null>(null);
 
   const fetchUsers = () => {
     setLoading(true);
@@ -79,13 +81,14 @@ const AdminUsersPage = () => {
               <SortableTableHeader label="Email" field="email" currentSortBy={sortBy} currentSortOrder={sortOrder} onSort={handleSort} />
               <SortableTableHeader label="Address" field="address" currentSortBy={sortBy} currentSortOrder={sortOrder} onSort={handleSort} />
               <SortableTableHeader label="Role" field="role" currentSortBy={sortBy} currentSortOrder={sortOrder} onSort={handleSort} />
+              <th className="border-b border-slate-200 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Details</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={4} className="px-4 py-6 text-center text-slate-400">Loading...</td></tr>
+              <tr><td colSpan={5} className="px-4 py-6 text-center text-slate-400">Loading...</td></tr>
             ) : users.length === 0 ? (
-              <tr><td colSpan={4} className="px-4 py-6 text-center text-slate-400">No users found</td></tr>
+              <tr><td colSpan={5} className="px-4 py-6 text-center text-slate-400">No users found</td></tr>
             ) : (
               users.map((u) => (
                 <tr key={u.id} className="border-b border-slate-100 last:border-0">
@@ -93,12 +96,17 @@ const AdminUsersPage = () => {
                   <td className="px-4 py-3">{u.email}</td>
                   <td className="px-4 py-3">{u.address}</td>
                   <td className="px-4 py-3">{u.role}</td>
+                  <td className="px-4 py-3">
+                    <button onClick={() => setViewUserId(u.id)} className="font-medium text-teal-600 hover:underline">View</button>
+                  </td>
                 </tr>
               ))
             )}
           </tbody>
         </table>
       </div>
+
+      {viewUserId && <UserDetailModal userId={viewUserId} onClose={() => setViewUserId(null)} />}
     </div>
   );
 };
