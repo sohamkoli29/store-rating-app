@@ -17,11 +17,19 @@ const AdminStoresPage = () => {
   const [sortBy, setSortBy] = useState("name");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [showForm, setShowForm] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchStores = () => {
+    setLoading(true);
+    setError(null);
     const params: Record<string, string> = { sortBy, sortOrder };
     Object.entries(filters).forEach(([k, v]) => v && (params[k] = v));
-    api.get("/admin/stores", { params }).then((res) => setStores(res.data.data));
+    api
+      .get("/admin/stores", { params })
+      .then((res) => setStores(res.data.data))
+      .catch((err) => setError(err?.response?.data?.message ?? "Failed to load stores"))
+      .finally(() => setLoading(false));
   };
 
   useEffect(fetchStores, [filters, sortBy, sortOrder]);
@@ -36,7 +44,7 @@ const AdminStoresPage = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-lg font-semibold text-slate-900">Stores</h1>
         <button onClick={() => setShowForm((v) => !v)} className="rounded-md bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700">
           {showForm ? "Close" : "Add store"}
@@ -55,6 +63,8 @@ const AdminStoresPage = () => {
         <input placeholder="Filter by address" value={filters.address} onChange={(e) => setFilters({ ...filters, address: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
       </div>
 
+      {error && <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+
       <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
         <table className="w-full text-sm">
           <thead>
@@ -66,16 +76,19 @@ const AdminStoresPage = () => {
             </tr>
           </thead>
           <tbody>
-            {stores.map((s) => (
-              <tr key={s.id} className="border-b border-slate-100 last:border-0">
-                <td className="px-4 py-3">{s.name}</td>
-                <td className="px-4 py-3">{s.email}</td>
-                <td className="px-4 py-3">{s.address}</td>
-                <td className="px-4 py-3">{s.rating.toFixed(2)}</td>
-              </tr>
-            ))}
-            {stores.length === 0 && (
+            {loading ? (
+              <tr><td colSpan={4} className="px-4 py-6 text-center text-slate-400">Loading...</td></tr>
+            ) : stores.length === 0 ? (
               <tr><td colSpan={4} className="px-4 py-6 text-center text-slate-400">No stores found</td></tr>
+            ) : (
+              stores.map((s) => (
+                <tr key={s.id} className="border-b border-slate-100 last:border-0">
+                  <td className="px-4 py-3">{s.name}</td>
+                  <td className="px-4 py-3">{s.email}</td>
+                  <td className="px-4 py-3">{s.address}</td>
+                  <td className="px-4 py-3">{s.rating.toFixed(2)}</td>
+                </tr>
+              ))
             )}
           </tbody>
         </table>
