@@ -1,0 +1,93 @@
+import { useEffect, useState } from "react";
+import api from "../../lib/axios";
+import SortableTableHeader from "../../components/SortableTableHeader";
+import AddUserForm from "./AddUserForm";
+
+interface AdminUserRow {
+  id: string;
+  name: string;
+  email: string;
+  address: string;
+  role: string;
+}
+
+const AdminUsersPage = () => {
+  const [users, setUsers] = useState<AdminUserRow[]>([]);
+  const [filters, setFilters] = useState({ name: "", email: "", address: "", role: "" });
+  const [sortBy, setSortBy] = useState("name");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [showForm, setShowForm] = useState(false);
+
+  const fetchUsers = () => {
+    const params: Record<string, string> = { sortBy, sortOrder };
+    Object.entries(filters).forEach(([k, v]) => v && (params[k] = v));
+    api.get("/admin/users", { params }).then((res) => setUsers(res.data.data));
+  };
+
+  useEffect(fetchUsers, [filters, sortBy, sortOrder]);
+
+  const handleSort = (field: string) => {
+    if (sortBy === field) setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    else {
+      setSortBy(field);
+      setSortOrder("asc");
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-lg font-semibold text-slate-900">Users</h1>
+        <button onClick={() => setShowForm((v) => !v)} className="rounded-md bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700">
+          {showForm ? "Close" : "Add user"}
+        </button>
+      </div>
+
+      {showForm && (
+        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+          <AddUserForm onCreated={() => { setShowForm(false); fetchUsers(); }} />
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
+        <input placeholder="Filter by name" value={filters.name} onChange={(e) => setFilters({ ...filters, name: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
+        <input placeholder="Filter by email" value={filters.email} onChange={(e) => setFilters({ ...filters, email: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
+        <input placeholder="Filter by address" value={filters.address} onChange={(e) => setFilters({ ...filters, address: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
+        <select value={filters.role} onChange={(e) => setFilters({ ...filters, role: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm">
+          <option value="">All roles</option>
+          <option value="NORMAL_USER">Normal user</option>
+          <option value="ADMIN">Admin</option>
+          <option value="STORE_OWNER">Store owner</option>
+        </select>
+      </div>
+
+      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
+        <table className="w-full text-sm">
+          <thead>
+            <tr>
+              <SortableTableHeader label="Name" field="name" currentSortBy={sortBy} currentSortOrder={sortOrder} onSort={handleSort} />
+              <SortableTableHeader label="Email" field="email" currentSortBy={sortBy} currentSortOrder={sortOrder} onSort={handleSort} />
+              <SortableTableHeader label="Address" field="address" currentSortBy={sortBy} currentSortOrder={sortOrder} onSort={handleSort} />
+              <SortableTableHeader label="Role" field="role" currentSortBy={sortBy} currentSortOrder={sortOrder} onSort={handleSort} />
+            </tr>
+          </thead>
+          <tbody>
+            {users.map((u) => (
+              <tr key={u.id} className="border-b border-slate-100 last:border-0">
+                <td className="px-4 py-3">{u.name}</td>
+                <td className="px-4 py-3">{u.email}</td>
+                <td className="px-4 py-3">{u.address}</td>
+                <td className="px-4 py-3">{u.role}</td>
+              </tr>
+            ))}
+            {users.length === 0 && (
+              <tr><td colSpan={4} className="px-4 py-6 text-center text-slate-400">No users found</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+export default AdminUsersPage;
